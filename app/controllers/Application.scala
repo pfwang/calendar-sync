@@ -10,7 +10,7 @@ import play.api.db._
 object Application extends Controller {
 
   def index = Action {
-    Ok(views.html.index(null))
+    Ok(views.html.homepage())
   }
 
   def db = Action {
