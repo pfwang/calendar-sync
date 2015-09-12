@@ -1,9 +1,15 @@
+@(signUpForm: Form[(String, String)])(implicit messages: Messages)
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Sup</title>
-  <h1>Hi Dad</h1>
+    <meta charset="UTF-8">
+    <title>Sup</title>
+    <h1>Hi Dad2</h1>
+
+    @helper.form(action = routes.Application.index()){
+        @helper.inputText(signUpForm("username"))
+        @helper.inputPassword(signUpForm("password"))
+    }
 </head>
 <body>
 
