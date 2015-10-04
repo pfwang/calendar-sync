@@ -1,5 +1,9 @@
+
 package controllers
 
+import calendarsync.database.DBActions
+import calendarsync.facebook.API
+import calendarsync.fbevents.EventSync._
 import play.api._
 import play.api.i18n.{Messages, I18nSupport}
 import play.api.mvc._
@@ -11,9 +15,79 @@ import play.api.db._
 import play.api.i18n.I18nSupport
 import play.i18n.MessagesApi
 import play.api.Play.current
+import  play.api.libs.json._
+import play.api.libs.functional.syntax._
 import play.api.i18n.Messages.Implicits._
+import API._
+
+
+import scala.util.{Success, Failure}
 
 object Application extends Controller{
+
+  def googleLogin = Action {
+    val clientId = scala.util.Properties.envOrElse("GOOGLE_CLIENT_ID", "no client id")
+    val redirectUri = scala.util.Properties.envOrElse("GOOGLE_REDIRECT_URI", "no redirect uri")
+    val scope = scala.util.Properties.envOrElse("GOOGLE_SCOPE", "no google scope")
+    val accessType = "offline"
+    val approvalPrompt = "force"
+    val baseUrl = "https://accounts.google.com/o/oauth2/auth"
+    Redirect(s"$baseUrl?scope=$scope&redirect_uri=$redirectUri&response_type=code&client_id=$clientId&approval_prompt=$approvalPrompt&access_type=$accessType");
+  }
+
+  def googleLoginResult(error:Option[String], code: Option[String]) = Action {
+    error match {
+      case Some(errorMessage) => Unauthorized(s"Login to google failed with error message: $errorMessage")
+      case None =>
+          code match {
+            case Some(authCode) => Redirect(routes.Application.googleTokenExchange(authCode))
+            case None => NotFound("Google auth code not found")
+          }
+    }
+  }
+
+  def googleTokenExchange(authCode: String) = Action {
+    Redirect(routes.GoogleTokenExchange.exchange(authCode))
+  }
+
+  def createNewAccount() = Action { implicit result =>
+    val tokenForm = Form(
+      tuple(
+        "userId" -> text,
+        "fbToken" -> text,
+        "refreshToken" -> text
+      )
+    )
+    tokenForm.bindFromRequest.fold(
+      failure => Ok(failure.errorsAsJson.toString()),
+      {
+      case (userId, fbToken, refreshToken) =>
+        getLongTermToken(fbToken) match {
+          case Success(token) =>
+            val longTermFbToken = token.split("=")(1)
+
+            DBActions.createNewUser(longTermFbToken, refreshToken) match {
+              case Success(_) =>
+
+                Ok("new sync created")
+              case Failure(error) =>
+                BadRequest(s"sync creation failed: $error")
+            }
+          case Failure(error) =>
+            BadRequest(s"sync creation failed: $error")
+        }
+      }
+    )
+  }
+
+  def facebookLogin(refreshToken: Option[String]) = Action {
+    Ok(views.html.homepage(refreshToken.get))
+  }
+
+  def calendarEventsSync() = Action {
+    syncEvents()
+    Ok("done")
+  }
 
   def index = Action {
     val signUpForm = Form(
@@ -22,7 +96,7 @@ object Application extends Controller{
         "password" -> text
       )
     )
-    Ok(views.html.homepage(signUpForm))
+    Ok("hi")
   }
 
   def submit = Action {
@@ -46,6 +120,7 @@ object Application extends Controller{
     } finally {
       conn.close()
     }
+
     Ok(out)
   }
 }

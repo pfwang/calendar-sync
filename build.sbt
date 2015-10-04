@@ -1,4 +1,4 @@
-name := """play-getting-started"""
+name := """calendar sync"""
 
 version := "1.0-SNAPSHOT"
 
@@ -10,7 +10,8 @@ libraryDependencies ++= Seq(
   jdbc,
   cache,
   "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
-  ws
+  ws,
+  "org.apache.httpcomponents" % "httpclient" % "4.5.1"
 )
 
 libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _ )
