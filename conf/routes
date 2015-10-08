@@ -18,3 +18,5 @@ GET        /assets/*file               controllers.Assets.at(path="/public", fil
 GET        /gettoken                   controllers.GoogleTokenExchange.exchange(authCode: String)
 
 POST       /newsync                    controllers.Application.createNewAccount()
+
+GET         /sync                       controllers.Application.calendarEventsSync()

@@ -2,8 +2,9 @@
 package controllers
 
 import calendarsync.database.DBActions
-import calendarsync.facebook.API
+import calendarsync.facebook.FbApi
 import calendarsync.fbevents.EventSync._
+import models.User
 import play.api._
 import play.api.i18n.{Messages, I18nSupport}
 import play.api.mvc._
@@ -18,7 +19,7 @@ import play.api.Play.current
 import  play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.i18n.Messages.Implicits._
-import API._
+import FbApi._
 
 
 import scala.util.{Success, Failure}
@@ -86,7 +87,21 @@ object Application extends Controller{
 
   def calendarEventsSync() = Action {
     syncEvents()
-    Ok("done")
+    DBActions.selectAllUsers() match {
+      case Success(list:List[User]) =>
+        FbApi.getEvents(list.head.fbToken) match {
+          case Success(events)=>
+            Ok(events.toString)
+          case Failure(error)=>
+            Ok(error.toString)
+        }
+        //Ok("hi")
+      case Failure(error) =>
+        Ok(error.toString)
+    }
+
+
+    //Ok("done")
   }
 
   def index = Action {
