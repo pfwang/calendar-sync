@@ -4,7 +4,7 @@ import java.sql.ResultSet
 import calendarsync.google.GoogleApi._
 
 
-import models.User
+import models.{Event, stringEvent, User}
 import play.api.Play.current
 import play.api.db.DB
 
@@ -51,16 +51,16 @@ object DBActions {
     }
   }
 
-  def selectAllEvents(user_id: Int): Try[List[Int]] = {
+  def selectAllEvents(user_id: Long): Try[List[Long]] = {
     val conn = DB.getConnection()
     try {
       val stmt = conn.createStatement
       Try(stmt.executeQuery(s"SELECT event_id FROM user_events WHERE user_id = '$user_id'")) match {
         case Success(results) =>
-          var resultList = List[Int]()
+          var resultList = List[Long]()
           Try {
             while (results.next()){
-              resultList = resultList :+  results.getInt(1)
+              resultList = resultList :+  results.getLong(1)
             }
 
             resultList
@@ -73,7 +73,23 @@ object DBActions {
     }
   }
 
+  def addEvents(user_id: Long, events:List[Event]): Try[Unit] = {
+    val conn = DB.getConnection()
+    try {
+      val stmt = conn.createStatement
+      Try{
+        events.map(event =>
+          stmt.executeUpdate(s"INSERT INTO events VALUES (${event.id}, '${event.start_time.get}', '${event.end_time.get}')")
+        )
+        events.map(event =>
+          stmt.executeUpdate(s"INSERT INTO user_events VALUES ($user_id, ${event.id} )")
+        )
+      }
+    } finally {
+      conn.close()
+    }
 
+  }
 
   def addInitialEvents(): Try[Unit] ={
     Try()

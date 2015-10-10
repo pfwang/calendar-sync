@@ -87,21 +87,21 @@ object Application extends Controller{
 
   def calendarEventsSync() = Action {
     syncEvents()
-    DBActions.selectAllUsers() match {
-      case Success(list:List[User]) =>
-        FbApi.getEvents(list.head.fbToken) match {
-          case Success(events)=>
-            Ok(events.toString)
-          case Failure(error)=>
-            Ok(error.toString)
-        }
-        //Ok("hi")
-      case Failure(error) =>
-        Ok(error.toString)
-    }
+//    DBActions.selectAllUsers() match {
+//      case Success(list:List[User]) =>
+//        FbApi.getEvents(list.head.fbToken) match {
+//          case Success(events)=>
+//            Ok(events.toString)
+//          case Failure(error)=>
+//            Ok(error.toString)
+//        }
+//        //Ok("hi")
+//      case Failure(error) =>
+//        Ok(error.toString)
+//    }
 
 
-    //Ok("done")
+    Ok("done")
   }
 
   def index = Action {

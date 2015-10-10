@@ -7,7 +7,7 @@ import play.api.libs.json.Reads
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scala.util.{Failure, Success, Try}
-import models.{stringPlace, Place, stringEvent}
+import models.{Event, stringPlace, Place, stringEvent}
 
 
 object FbApi {
@@ -44,22 +44,22 @@ object FbApi {
     return Try(tokenExpirePair(0))
   }
 
-  def getEvents(token: String): Try[List[stringEvent]] = {
+  def getEvents(token: String): Try[List[Event]] = {
     val timestamp: Long = System.currentTimeMillis / 1000
-    val url = s"https://graph.facebook.com//v2.4/me/events?access_token=$token"
+    val url = s"https://graph.facebook.com//v2.4/me/events?access_token=$token&since=1444089600"
     val client = HttpClientBuilder.create().build()
     val get = new HttpGet(url)
 
     val response = client.execute(get)
     val responseStr = EntityUtils.toString(response.getEntity)
-    println("hi")
     val json = Json.parse(responseStr)
-    println(Json.prettyPrint(json))
+    //println(Json.prettyPrint(json))
     val listEventsJS = (json \ "data").as[JsValue].validate[List[stringEvent]]
-    println("hi3")
     println(Json.stringify(json))
-    val listEvents: Try[List[stringEvent]] = listEventsJS match {
-      case JsSuccess(list: List[stringEvent], _) => Success(list)
+    val listEvents: Try[List[Event]] = listEventsJS match {
+      case JsSuccess(list: List[stringEvent], _) =>
+        Success(list.map(stringEvent =>
+        Event(stringEvent.id.toLong,stringEvent.rsvp_status, stringEvent.description, stringEvent.name, stringEvent.start_time, stringEvent.end_time, stringEvent.place)))
       case JsError(error) =>
         println(error.toString())
         Failure(throw new Exception(error.toString()))
@@ -67,4 +67,5 @@ object FbApi {
     get.releaseConnection()
     listEvents
   }
+
 }
